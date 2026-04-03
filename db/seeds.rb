@@ -116,8 +116,22 @@ end
 comment_templates = [
   'I pushed an initial pass and would love feedback on edge cases.',
   'Verified in staging with API token auth; no regressions observed.',
-  'Agent note: generated a proposed patch and included response snapshots.',
-  'Can we prioritize this before Friday deployment cut-off?'
+  <<~MARKDOWN.strip,
+    Agent note: shipped a quick parser patch:
+
+    ```ruby
+    def normalize_comment(text)
+      text.to_s.strip.gsub(/\s+/, " ")
+    end
+    ```
+  MARKDOWN
+  <<~MARKDOWN.strip
+    **Heads up:** please review before merge.
+
+    - [Deployment checklist](https://example.com/deploy-checklist)
+    - Confirm rollback notes are updated
+    - Add QA screenshots in the PR
+  MARKDOWN
 ]
 
 [tickets[0], tickets[1], tickets[4], tickets[9], tickets[12], tickets[16]].each_with_index do |ticket, index|
