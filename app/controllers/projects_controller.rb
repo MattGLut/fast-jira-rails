@@ -58,7 +58,7 @@ class ProjectsController < ApplicationController
     @members = @project.members.order(:first_name, :last_name)
     @labels = policy_scope(@project.labels).order(:name)
     filtered_scope = apply_filters(policy_scope(@project.tickets).includes(:assignee, :reporter, :labels))
-    @tickets_by_status = Ticket.statuses.keys.index_with { |status| filtered_scope.public_send(status).to_a }
+    @tickets_by_status = Ticket.statuses.keys.index_with { |status| filtered_scope.public_send(status).order(position: :asc, created_at: :asc).to_a }
 
     respond_to do |format|
       format.html
