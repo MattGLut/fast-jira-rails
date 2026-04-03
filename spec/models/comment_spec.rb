@@ -11,4 +11,10 @@ RSpec.describe Comment, type: :model do
   describe 'validations' do
     it { is_expected.to validate_presence_of(:body) }
   end
+
+  describe 'defaults' do
+    it 'defaults agent_authored to false' do
+      expect(build(:comment).agent_authored).to be(false)
+    end
+  end
 end

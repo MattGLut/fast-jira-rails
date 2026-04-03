@@ -17,6 +17,8 @@ RSpec.describe TicketRelationship, type: :model do
   end
 
   describe 'validations' do
+    it { is_expected.to validate_presence_of(:relationship_type) }
+
     it 'validates uniqueness of source, target, and relationship type combination' do
       source = create(:ticket)
       target = create(:ticket)

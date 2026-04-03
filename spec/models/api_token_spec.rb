@@ -16,6 +16,16 @@ RSpec.describe ApiToken, type: :model do
       expect(api_token.token).to be_present
       expect(api_token.token.length).to eq(36)
     end
+
+    it 'regenerates token via has_secure_token helper' do
+      original_token = api_token.token
+
+      api_token.regenerate_token
+
+      expect(api_token.token).to be_present
+      expect(api_token.token).not_to eq(original_token)
+      expect(api_token.token.length).to eq(36)
+    end
   end
 
   describe 'scopes' do
