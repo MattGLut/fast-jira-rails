@@ -1,0 +1,10 @@
+<div class="space-y-4">
+  <h1 class="text-2xl font-bold text-white" style="font-family: 'Playfair Display', serif;">Members · <%= @project.name %></h1>
+  <div class="space-y-2">
+    <% @memberships.each do |membership| %>
+      <div class="rounded-lg border border-gray-700 bg-gray-800/60 px-4 py-3 text-sm text-gray-200">
+        <%= membership.user.email %> · <span class="text-gray-400"><%= membership.role.humanize %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

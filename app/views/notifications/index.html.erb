@@ -1,0 +1,40 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-cyan-300">Inbox</p>
+      <h1 class="text-3xl font-bold text-white" style="font-family: 'Playfair Display', serif;">Notifications</h1>
+    </div>
+    <% if @unread_notifications_count.to_i.positive? %>
+      <%= button_to "Mark all as read", mark_all_as_read_notifications_path,
+                    method: :patch,
+                    class: "rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800",
+                    form: { data: { turbo_stream: true } } %>
+    <% end %>
+  </div>
+
+  <div id="notifications_list" class="space-y-3">
+    <% if @notifications.any? %>
+      <% @notifications.each do |notification| %>
+        <%= render "notification", notification: notification %>
+      <% end %>
+    <% else %>
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-6 text-gray-300">
+        You have no notifications yet.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex items-center justify-between border-t border-gray-800 pt-4 text-sm">
+    <div class="text-gray-400">
+      Showing <%= @notifications.length %> of <%= @total_count %> notifications
+    </div>
+    <div class="flex items-center gap-2">
+      <% if @has_previous_page %>
+        <%= link_to "Previous", notifications_path(page: @page - 1), class: "rounded-lg border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800" %>
+      <% end %>
+      <% if @has_next_page %>
+        <%= link_to "Next", notifications_path(page: @page + 1), class: "rounded-lg border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800" %>
+      <% end %>
+    </div>
+  </div>
+</div>

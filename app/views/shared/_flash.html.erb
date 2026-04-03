@@ -1,0 +1,7 @@
+<% flash.each do |type, message| %>
+  <% next if message.blank? %>
+  <% tone = type.to_sym == :alert ? "border-red-400/40 bg-red-500/20 text-red-100" : "border-emerald-400/40 bg-emerald-500/20 text-emerald-100" %>
+  <div class="rounded-xl border px-4 py-3 text-sm shadow-xl shadow-black/30 backdrop-blur <%= tone %>">
+    <%= message %>
+  </div>
+<% end %>

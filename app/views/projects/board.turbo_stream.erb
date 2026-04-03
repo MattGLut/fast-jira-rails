@@ -1,0 +1,5 @@
+<%= turbo_stream.replace "kanban_board" do %>
+  <%= turbo_frame_tag "kanban_board" do %>
+    <%= render "board_content" %>
+  <% end %>
+<% end %>

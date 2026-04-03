@@ -1,0 +1,33 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-bold text-white" style="font-family: 'Playfair Display', serif;">My Tickets</h1>
+    <p class="text-sm text-gray-400">Everything currently assigned to you.</p>
+  </div>
+
+  <div class="overflow-x-auto rounded-2xl border border-gray-800 bg-gray-800/50 p-4">
+    <table class="min-w-full text-sm">
+      <thead class="text-left text-xs uppercase tracking-wide text-gray-400">
+        <tr>
+          <th class="pb-2">Key</th>
+          <th class="pb-2">Title</th>
+          <th class="pb-2">Project</th>
+          <th class="pb-2">Status</th>
+          <th class="pb-2">Priority</th>
+          <th class="pb-2">Due</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        <% @tickets.each do |ticket| %>
+          <tr>
+            <td class="py-2 text-gray-300"><%= ticket.key %></td>
+            <td class="py-2"><%= link_to ticket.title, ticket_path(ticket), class: "text-cyan-300 hover:text-cyan-200" %></td>
+            <td class="py-2 text-gray-300"><%= ticket.project.name %></td>
+            <td class="py-2"><span class="rounded-full px-2 py-1 text-xs <%= status_badge_class(ticket.status) %>"><%= ticket.status.humanize %></span></td>
+            <td class="py-2"><span class="rounded-full px-2 py-1 text-xs <%= priority_badge_class(ticket.priority) %>"><%= ticket.priority.humanize %></span></td>
+            <td class="py-2 text-gray-400"><%= ticket.due_date&.strftime("%Y-%m-%d") || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

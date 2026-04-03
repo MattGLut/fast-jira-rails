@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "notifications_bell" do %>
+  <%= render "notifications/dropdown", notifications: @recent_notifications, unread_count: @unread_notifications_count %>
+<% end %>

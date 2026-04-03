@@ -1,0 +1,6 @@
+<%= turbo_stream.append "pr_links_list" do %>
+  <div id="<%= dom_id(@pr_link) %>" class="rounded-lg border border-gray-700 bg-gray-900/60 p-2 text-sm">
+    <%= link_to @pr_link.title, @pr_link.url, class: "text-cyan-300 hover:text-cyan-200", target: "_blank", rel: "noopener" %>
+    <span class="ml-2 text-xs text-gray-400">(<%= @pr_link.status %>)</span>
+  </div>
+<% end %>

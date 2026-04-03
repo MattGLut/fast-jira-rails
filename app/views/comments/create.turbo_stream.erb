@@ -1,0 +1,19 @@
+<%= turbo_stream.append "comments_list" do %>
+  <div id="<%= dom_id(@comment) %>" class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+    <div class="mb-2 flex items-center justify-between text-xs text-gray-400">
+      <span><%= @comment.user.email %></span>
+      <span>just now</span>
+    </div>
+    <p class="text-sm text-gray-200"><%= @comment.body %></p>
+    <div class="mt-2">
+      <%= button_to "Delete", ticket_comment_path(@ticket, @comment), method: :delete, class: "text-xs text-red-300 hover:text-red-200" %>
+    </div>
+  </div>
+<% end %>
+
+<%= turbo_stream.replace "new_comment" do %>
+  <%= form_with model: [@ticket, @ticket.comments.new], class: "mt-4 space-y-2" do |f| %>
+    <%= f.text_area :body, rows: 3, placeholder: "Add a comment...", class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+    <%= f.submit "Post comment", class: "rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-gray-950 hover:bg-cyan-400" %>
+  <% end %>
+<% end %>

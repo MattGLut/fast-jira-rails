@@ -1,0 +1,136 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-cyan-300"><%= @ticket.key %></p>
+      <h1 class="text-3xl font-bold text-white" style="font-family: 'Playfair Display', serif;"><%= @ticket.title %></h1>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "Edit", edit_ticket_path(@ticket), class: "rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800" %>
+      <%= button_to "Delete", ticket_path(@ticket), method: :delete, class: "rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-200 hover:bg-red-500/10" %>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <section class="space-y-6 lg:col-span-2">
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h2 class="mb-3 text-lg font-semibold text-white">Description</h2>
+        <p class="whitespace-pre-wrap text-sm text-gray-300"><%= @ticket.description.presence || "No description yet." %></p>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h2 class="mb-4 text-lg font-semibold text-white">Comments</h2>
+        <%= turbo_frame_tag "ticket_comments" do %>
+          <div id="comments_list" class="space-y-3">
+            <% @comments.each do |comment| %>
+              <div id="<%= dom_id(comment) %>" class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+                <div class="mb-2 flex items-center justify-between text-xs text-gray-400">
+                  <span><%= comment.user.email %></span>
+                  <span><%= time_ago_in_words(comment.created_at) %> ago</span>
+                </div>
+                <p class="text-sm text-gray-200"><%= comment.body %></p>
+                <% if policy(comment).destroy? %>
+                  <div class="mt-2">
+                    <%= button_to "Delete", ticket_comment_path(@ticket, comment), method: :delete, class: "text-xs text-red-300 hover:text-red-200" %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div id="new_comment">
+          <%= form_with model: [@ticket, @comment], class: "mt-4 space-y-2" do |f| %>
+            <%= f.text_area :body, rows: 3, placeholder: "Add a comment...", class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+            <%= f.submit "Post comment", class: "rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-gray-950 hover:bg-cyan-400" %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h2 class="mb-4 text-lg font-semibold text-white">Activity</h2>
+        <div class="space-y-2">
+          <% @activity_logs.each do |activity| %>
+            <div class="rounded-lg border border-gray-700 bg-gray-900/60 p-3 text-sm">
+              <p class="text-gray-200"><span class="font-semibold text-white"><%= activity.user.email %></span> <%= activity.action.humanize.downcase %></p>
+              <% if activity.field_changed.present? %>
+                <p class="text-xs text-gray-400"><%= activity.field_changed.humanize %>: <%= activity.old_value.presence || "—" %> → <%= activity.new_value.presence || "—" %></p>
+              <% end %>
+              <p class="text-xs text-gray-500"><%= l(activity.created_at, format: :short) %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </section>
+
+    <aside class="space-y-6">
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Details</h3>
+        <dl class="space-y-2 text-sm">
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Status</dt><dd><span class="rounded-full px-2 py-1 text-xs <%= status_badge_class(@ticket.status) %>"><%= @ticket.status.humanize %></span></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Priority</dt><dd><span class="rounded-full px-2 py-1 text-xs <%= priority_badge_class(@ticket.priority) %>"><%= @ticket.priority.humanize %></span></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Type</dt><dd class="text-gray-200"><%= type_icon(@ticket.ticket_type) %> <%= @ticket.ticket_type.humanize %></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Assignee</dt><dd class="text-gray-200"><%= @ticket.assignee&.email || "Unassigned" %></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Reporter</dt><dd class="text-gray-200"><%= @ticket.reporter.email %></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Story Points</dt><dd class="text-gray-200"><%= @ticket.story_points || "—" %></dd></div>
+          <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Due Date</dt><dd class="text-gray-200"><%= @ticket.due_date || "—" %></dd></div>
+        </dl>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Labels</h3>
+        <div class="flex flex-wrap gap-2">
+          <% @ticket.labels.each do |label| %>
+            <span class="rounded-full border border-gray-700 px-2 py-1 text-xs text-gray-200" style="background-color: color-mix(in srgb, <%= label.color %> 25%, #111827);">
+              <%= label.name %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">PR Links</h3>
+        <div id="pr_links_list" class="space-y-2">
+          <% @pr_links.each do |pr_link| %>
+            <div id="<%= dom_id(pr_link) %>" class="rounded-lg border border-gray-700 bg-gray-900/60 p-2 text-sm">
+              <%= link_to pr_link.title, pr_link.url, class: "text-cyan-300 hover:text-cyan-200", target: "_blank", rel: "noopener" %>
+              <span class="ml-2 text-xs text-gray-400">(<%= pr_link.status %>)</span>
+            </div>
+          <% end %>
+        </div>
+
+        <%= form_with model: [@ticket, @pr_link], class: "mt-3 space-y-2" do |f| %>
+          <%= f.text_field :title, placeholder: "PR title", class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+          <%= f.url_field :url, placeholder: "https://...", class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+          <%= f.select :status, PrLink.statuses.keys.map { |status| [status.humanize, status] }, {}, class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+          <%= f.submit "Add PR", class: "rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-gray-950 hover:bg-cyan-400" %>
+        <% end %>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Related Tickets</h3>
+        <div class="space-y-2">
+          <% @relationships.each do |relationship| %>
+            <% related_ticket = relationship.source_ticket_id == @ticket.id ? relationship.target_ticket : relationship.source_ticket %>
+            <div class="rounded-lg border border-gray-700 bg-gray-900/60 p-2 text-sm text-gray-200">
+              <div class="flex items-center justify-between">
+                <span><%= relationship.relationship_type.humanize %> · <%= link_to related_ticket.key, ticket_path(related_ticket), class: "text-cyan-300" %></span>
+                <%= button_to "✕", ticket_ticket_relationship_path(@ticket, relationship), method: :delete, class: "text-xs text-red-300" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <%= form_with model: [@ticket, @ticket_relationship], class: "mt-3 space-y-2" do |f| %>
+          <%= f.collection_select :target_ticket_id,
+                                  policy_scope(Ticket).where(project_id: @ticket.project_id).where.not(id: @ticket.id).order(:ticket_number),
+                                  :id,
+                                  :key,
+                                  { prompt: "Select ticket" },
+                                  class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+          <%= f.select :relationship_type, TicketRelationship.relationship_types.keys.map { |value| [value.humanize, value] }, {}, class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100" %>
+          <%= f.submit "Add relation", class: "rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-gray-950 hover:bg-cyan-400" %>
+        <% end %>
+      </div>
+    </aside>
+  </div>
+</div>

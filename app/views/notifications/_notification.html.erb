@@ -1,0 +1,28 @@
+<% dom_id_value = local_assigns.fetch(:dom_id_value, dom_id(notification)) %>
+<% show_mark_button = local_assigns.fetch(:show_mark_button, true) %>
+
+<div id="<%= dom_id_value %>" class="rounded-xl border <%= notification.read? ? 'border-gray-800 bg-gray-900/60' : 'border-cyan-500/30 bg-cyan-500/10' %> p-3">
+  <div class="flex items-start gap-3">
+    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-gray-200">
+      <%= notification.actor&.email&.first&.upcase || "•" %>
+    </div>
+
+    <div class="min-w-0 flex-1">
+      <p class="text-sm leading-5 text-gray-100"><%= notification.message %></p>
+      <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+        <span><%= time_ago_in_words(notification.created_at) %> ago</span>
+        <% if notification.ticket.present? %>
+          <span class="text-gray-600">•</span>
+          <%= link_to notification.ticket.key, ticket_path(notification.ticket), class: "text-cyan-300 hover:text-cyan-200" %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if show_mark_button && !notification.read? %>
+      <%= button_to "Mark read", mark_as_read_notification_path(notification),
+                    method: :patch,
+                    class: "shrink-0 rounded-lg border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-800",
+                    form: { data: { turbo_stream: true } } %>
+    <% end %>
+  </div>
+</div>

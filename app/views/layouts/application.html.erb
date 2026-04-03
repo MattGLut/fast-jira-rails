@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html class="dark">
+  <head>
+    <title><%= content_for(:title) || "FastJira" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Fast Jira Rails">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-900 text-gray-100 antialiased" style="font-family: 'IBM Plex Sans', sans-serif;">
+    <% if user_signed_in? %>
+      <div class="min-h-screen" data-controller="sidebar">
+        <%= render "shared/sidebar" %>
+
+        <div class="lg:pl-72">
+          <%= render "shared/topbar" %>
+          <div id="flash" class="fixed right-4 top-4 z-50 w-full max-w-sm space-y-2">
+            <%= render "shared/flash" %>
+          </div>
+
+          <main class="px-4 py-6 sm:px-6 lg:px-10">
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <div class="flex min-h-screen items-center justify-center bg-gray-900 px-4 py-8">
+        <div class="w-full max-w-2xl">
+          <div id="flash" class="mb-4 space-y-2">
+            <%= render "shared/flash" %>
+          </div>
+
+          <main>
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% end %>
+  </body>
+</html>

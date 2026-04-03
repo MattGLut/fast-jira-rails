@@ -1,0 +1,21 @@
+<header class="sticky top-0 z-30 border-b border-gray-800 bg-gray-900/90 backdrop-blur">
+  <div class="flex items-center justify-between px-4 py-3">
+    <button type="button"
+            class="rounded-lg border border-gray-700 bg-gray-800 p-2 text-gray-200 lg:hidden"
+            data-action="click->sidebar#toggle"
+            aria-label="Toggle navigation">
+      ☰
+    </button>
+
+    <h1 class="text-lg font-semibold tracking-wide text-white" style="font-family: 'Playfair Display', serif;">FastJira</h1>
+
+    <div class="flex items-center gap-3">
+      <div id="notifications_bell">
+        <%= render "notifications/dropdown", notifications: @recent_notifications, unread_count: @unread_notifications_count %>
+      </div>
+      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-gray-100">
+        <%= current_user.email.first.upcase %>
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,43 @@
+<div class="space-y-5" data-controller="kanban filter" data-kanban-project-id-value="<%= @project.id %>">
+  <%= form_with url: board_project_path(@project), method: :get, class: "grid gap-3 rounded-2xl border border-gray-800 bg-gray-800/60 p-4 md:grid-cols-2 xl:grid-cols-5", data: { filter_target: "form", turbo_frame: "kanban_board" } do |f| %>
+    <div class="xl:col-span-2">
+      <%= f.text_field :q, value: params[:q], placeholder: "Search tickets...", class: "w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100 focus:border-cyan-400 focus:outline-none", data: { action: "input->filter#search" } %>
+    </div>
+
+    <%= f.select :assignee_id,
+                 options_for_select([["All assignees", ""]] + @members.map { |member| [[member.first_name, member.last_name].compact.join(" ").presence || member.email, member.id] }, params[:assignee_id]),
+                 {},
+                 class: "rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100",
+                 data: { action: "change->filter#submit" } %>
+
+    <%= f.select :priority,
+                 options_for_select([["All priorities", ""]] + Ticket.priorities.keys.map { |priority| [priority.humanize, priority] }, params[:priority]),
+                 {},
+                 class: "rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100",
+                 data: { action: "change->filter#submit" } %>
+
+    <div class="grid grid-cols-2 gap-3">
+      <%= f.select :ticket_type,
+                   options_for_select([["All types", ""]] + Ticket.ticket_types.keys.map { |ticket_type| [ticket_type.humanize, ticket_type] }, params[:ticket_type]),
+                   {},
+                   class: "rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100",
+                   data: { action: "change->filter#submit" } %>
+
+      <%= f.select :label_id,
+                   options_for_select([["All labels", ""]] + @labels.map { |label| [label.name, label.id] }, params[:label_id]),
+                   {},
+                   class: "rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100",
+                   data: { action: "change->filter#submit" } %>
+    </div>
+  <% end %>
+
+  <div class="overflow-x-auto pb-3">
+    <div class="flex min-w-max gap-4">
+      <%= render "kanban_column", status: "todo", title: "To Do", tickets: @tickets_by_status["todo"] %>
+      <%= render "kanban_column", status: "in_progress", title: "In Progress", tickets: @tickets_by_status["in_progress"] %>
+      <%= render "kanban_column", status: "code_review", title: "Code Review", tickets: @tickets_by_status["code_review"] %>
+      <%= render "kanban_column", status: "qa", title: "QA", tickets: @tickets_by_status["qa"] %>
+      <%= render "kanban_column", status: "done", title: "Done", tickets: @tickets_by_status["done"] %>
+    </div>
+  </div>
+</div>
