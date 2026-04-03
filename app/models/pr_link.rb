@@ -9,6 +9,6 @@ class PrLink < ApplicationRecord
   belongs_to :user
 
   validates :url, presence: true,
-                  format: { with: /\Ahttps?:\/\//i, message: 'must start with http or https' }
+                  format: { with: /\Ahttps?:\/\/\S+\z/i, message: 'must be a valid http or https URL' }
   validates :title, presence: true
 end
