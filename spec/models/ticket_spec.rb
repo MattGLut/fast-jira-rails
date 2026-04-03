@@ -75,4 +75,35 @@ RSpec.describe Ticket, type: :model do
       expect(ticket.key).to eq("PROJ-#{ticket.ticket_number}")
     end
   end
+
+  describe 'broadcast callbacks' do
+    let(:project) { create(:project) }
+    let(:reporter) { create(:user) }
+    let(:ticket) { create(:ticket, project: project, reporter: reporter, status: :todo) }
+
+    describe '#broadcast_ticket_update' do
+      it 'broadcasts board updates on status change' do
+        allow(ticket).to receive(:broadcast_replace_to)
+
+        expect(ticket).to receive(:broadcast_remove_to).with("project_#{project.id}_board", target: "ticket_card_#{ticket.id}")
+        expect(ticket).to receive(:broadcast_append_to).with(
+          "project_#{project.id}_board",
+          target: 'kanban_column_in_progress_cards',
+          partial: 'tickets/card',
+          locals: { ticket: ticket }
+        )
+
+        ticket.update!(status: :in_progress)
+      end
+
+      it 'does not broadcast board updates when non-status fields change' do
+        allow(ticket).to receive(:broadcast_replace_to)
+
+        expect(ticket).not_to receive(:broadcast_remove_to)
+        expect(ticket).not_to receive(:broadcast_append_to)
+
+        ticket.update!(title: 'Updated title')
+      end
+    end
+  end
 end
