@@ -33,6 +33,6 @@ class ProjectMembershipsController < ApplicationController
   end
 
   def membership_params
-    params.require(:project_membership).permit(:user_id, :role)
+    params.require(:project_membership).permit(:user_id)
   end
 end
