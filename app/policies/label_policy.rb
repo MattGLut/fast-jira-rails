@@ -11,6 +11,10 @@ class LabelPolicy < ApplicationPolicy
     admin? || manager_of_project?(record.project)
   end
 
+  def settings?
+    create?
+  end
+
   def update?
     admin? || manager_of_project?(record.project)
   end

@@ -202,14 +202,6 @@ RSpec.describe "Projects", type: :request do
   end
 
   describe "GET /projects/:id/settings" do
-    before do
-      LabelPolicy.class_eval do
-        def settings?
-          update?
-        end
-      end
-    end
-
     it "renders settings page for manager" do
       sign_in manager
 
