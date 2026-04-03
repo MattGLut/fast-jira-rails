@@ -95,7 +95,9 @@ module Api
           NotificationService.status_changed(@ticket, current_user, old_status, new_status)
         end
 
-        render json: { ticket: ticket_payload(@ticket.reload) }
+        @ticket.reload
+        @ticket.broadcast_board_move if old_status != new_status
+        render json: { ticket: ticket_payload(@ticket) }
       rescue ActiveRecord::RecordInvalid => e
         render json: { errors: [e.message] }, status: :unprocessable_entity
       end

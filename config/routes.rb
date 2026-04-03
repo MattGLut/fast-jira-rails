@@ -21,6 +21,7 @@ Rails.application.routes.draw do
 
     member do
       patch :transition
+      patch :reorder
       patch :assign
     end
   end

@@ -208,4 +208,12 @@ if Notification.count == 0
   end
 end
 
+Ticket.statuses.keys.each do |status|
+  Project.find_each do |project|
+    project.tickets.where(status: status).order(created_at: :asc).each_with_index do |ticket, idx|
+      ticket.update_column(:position, idx)
+    end
+  end
+end
+
 puts "Seed complete: #{User.count} users, #{Project.count} projects, #{Ticket.count} tickets, #{Notification.count} notifications"

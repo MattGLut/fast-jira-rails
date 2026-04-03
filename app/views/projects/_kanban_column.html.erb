@@ -9,8 +9,6 @@
        class="flex min-h-[120px] flex-1 flex-col gap-3"
        data-kanban-target="column"
        data-status="<%= status %>">
-    <% tickets.each do |ticket| %>
-      <%= render "tickets/card", ticket: ticket %>
-    <% end %>
+    <%= render "projects/kanban_column_cards", tickets: tickets, status: status %>
   </div>
 </div>

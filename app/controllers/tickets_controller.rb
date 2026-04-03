@@ -1,6 +1,6 @@
 class TicketsController < ApplicationController
   before_action :set_project, only: %i[new create]
-  before_action :set_ticket, only: %i[show edit update destroy transition assign]
+  before_action :set_ticket, only: %i[show edit update destroy transition assign reorder]
 
   def show
     authorize @ticket
@@ -79,6 +79,11 @@ class TicketsController < ApplicationController
       create_activity(@ticket, "status_changed", "status", old_status, new_status)
       NotificationService.status_changed(@ticket, current_user, old_status, new_status)
 
+      # Broadcast board move to OTHER browsers after responding to originator.
+      # The originator gets the turbo_stream response (or SortableJS handles it);
+      # the broadcast updates everyone else's board in real time.
+      @ticket.broadcast_board_move if old_status != new_status
+
       respond_to do |format|
         format.turbo_stream
         format.json { render json: { ok: true } }
@@ -87,6 +92,44 @@ class TicketsController < ApplicationController
     else
       render json: { error: @ticket.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
+  end
+
+  def reorder
+    authorize @ticket, :transition?
+    new_status = params[:status].to_s
+    new_position = params[:position].to_i
+
+    return render_invalid_status unless Ticket.statuses.key?(new_status)
+
+    old_status = @ticket.status
+    status_changed = old_status != new_status
+
+    ActiveRecord::Base.transaction do
+      if status_changed
+        @ticket.update!(status: new_status, position: new_position)
+        reposition_siblings(@ticket)
+        compact_column_positions(@ticket.project, old_status)
+        create_activity(@ticket, "status_changed", "status", old_status, new_status)
+        NotificationService.status_changed(@ticket, current_user, old_status, new_status)
+      else
+        @ticket.update!(position: new_position)
+        reposition_siblings(@ticket)
+      end
+    end
+
+    @ticket.broadcast_column_reorder
+    if status_changed
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "project_#{@ticket.project_id}_board",
+        target: "kanban_column_#{old_status}_cards",
+        partial: "projects/kanban_column_cards",
+        locals: { tickets: @ticket.project.tickets.where(status: old_status).positioned, status: old_status }
+      )
+    end
+
+    render json: { ok: true }
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
   end
 
   def assign
@@ -159,6 +202,24 @@ class TicketsController < ApplicationController
       next if before_value.to_s == after_value.to_s
 
       create_activity(@ticket, "updated", field_name, before_value&.to_s, after_value&.to_s)
+    end
+  end
+
+  def reposition_siblings(ticket)
+    siblings = ticket.project.tickets
+                     .where(status: ticket.status)
+                     .where.not(id: ticket.id)
+                     .order(position: :asc, created_at: :asc)
+
+    siblings.each_with_index do |sibling, index|
+      new_pos = index >= ticket.position ? index + 1 : index
+      sibling.update_column(:position, new_pos) if sibling.position != new_pos
+    end
+  end
+
+  def compact_column_positions(project, status)
+    project.tickets.where(status: status).order(position: :asc, created_at: :asc).each_with_index do |ticket, index|
+      ticket.update_column(:position, index) if ticket.position != index
     end
   end
 

@@ -66,6 +66,33 @@ RSpec.describe Ticket, type: :model do
       expect(second_ticket.ticket_number).to eq(2)
       expect(project.reload.ticket_sequence).to eq(2)
     end
+
+    it 'sets position at the end of the project/status list on create' do
+      project = create(:project)
+      reporter = create(:user)
+      create(:ticket, project: project, reporter: reporter, status: :todo, position: 0)
+      create(:ticket, project: project, reporter: reporter, status: :todo, position: 1)
+
+      ticket = create(:ticket, project: project, reporter: reporter, status: :todo)
+
+      expect(ticket.position).to eq(2)
+    end
+  end
+
+  describe '.positioned' do
+    it 'orders by position then created_at' do
+      project = create(:project)
+      reporter = create(:user)
+      oldest = create(:ticket, project: project, reporter: reporter, status: :todo)
+      newer = create(:ticket, project: project, reporter: reporter, status: :todo)
+      later = create(:ticket, project: project, reporter: reporter, status: :todo)
+
+      oldest.update_columns(position: 0, created_at: 2.days.ago)
+      newer.update_columns(position: 0, created_at: 1.day.ago)
+      later.update_columns(position: 1)
+
+      expect(project.tickets.where(status: :todo).positioned).to eq([oldest, newer, later])
+    end
   end
 
   describe '#key' do
@@ -82,27 +109,58 @@ RSpec.describe Ticket, type: :model do
     let(:ticket) { create(:ticket, project: project, reporter: reporter, status: :todo) }
 
     describe '#broadcast_ticket_update' do
-      it 'broadcasts board updates on status change' do
-        allow(ticket).to receive(:broadcast_replace_to)
-
-        expect(ticket).to receive(:broadcast_remove_to).with("project_#{project.id}_board", target: "ticket_card_#{ticket.id}")
-        expect(ticket).to receive(:broadcast_append_to).with(
-          "project_#{project.id}_board",
-          target: 'kanban_column_in_progress_cards',
-          partial: 'tickets/card',
+      it 'broadcasts detail sidebar replace on status change' do
+        expect(ticket).to receive(:broadcast_replace_to).with(
+          "ticket_#{ticket.id}",
+          target: "ticket_#{ticket.id}_details",
+          partial: 'tickets/detail_sidebar',
           locals: { ticket: ticket }
         )
 
         ticket.update!(status: :in_progress)
       end
 
-      it 'does not broadcast board updates when non-status fields change' do
+      it 'does not broadcast board remove/append (controller handles that)' do
         allow(ticket).to receive(:broadcast_replace_to)
 
         expect(ticket).not_to receive(:broadcast_remove_to)
         expect(ticket).not_to receive(:broadcast_append_to)
 
         ticket.update!(title: 'Updated title')
+      end
+    end
+
+    describe '#broadcast_board_move' do
+      it 'broadcasts both new and old columns when status changed' do
+        ticket.update!(status: :in_progress)
+
+        expect(Turbo::StreamsChannel).to receive(:broadcast_replace_to).with(
+          "project_#{project.id}_board",
+          target: 'kanban_column_in_progress_cards',
+          partial: 'projects/kanban_column_cards',
+          locals: { tickets: project.tickets.where(status: 'in_progress').positioned, status: 'in_progress' }
+        ).ordered
+        expect(Turbo::StreamsChannel).to receive(:broadcast_replace_to).with(
+          "project_#{project.id}_board",
+          target: 'kanban_column_todo_cards',
+          partial: 'projects/kanban_column_cards',
+          locals: { tickets: project.tickets.where(status: 'todo').positioned, status: 'todo' }
+        ).ordered
+
+        ticket.broadcast_board_move
+      end
+    end
+
+    describe '#broadcast_column_reorder' do
+      it 'broadcasts a replace for the status column cards' do
+        expect(Turbo::StreamsChannel).to receive(:broadcast_replace_to).with(
+          "project_#{project.id}_board",
+          target: 'kanban_column_todo_cards',
+          partial: 'projects/kanban_column_cards',
+          locals: { tickets: project.tickets.where(status: 'todo').positioned, status: 'todo' }
+        )
+
+        ticket.broadcast_column_reorder
       end
     end
   end

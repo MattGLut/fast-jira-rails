@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_02_233100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_03_100000) do
   create_table "activity_logs", force: :cascade do |t|
     t.string "action", null: false
     t.datetime "created_at", null: false
@@ -136,6 +136,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_233100) do
     t.datetime "created_at", null: false
     t.text "description"
     t.date "due_date"
+    t.integer "position", default: 0, null: false
     t.integer "priority", default: 1, null: false
     t.integer "project_id", null: false
     t.integer "reporter_id", null: false
@@ -147,6 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_233100) do
     t.datetime "updated_at", null: false
     t.index ["assignee_id"], name: "index_tickets_on_assignee_id"
     t.index ["priority"], name: "index_tickets_on_priority"
+    t.index ["project_id", "status", "position"], name: "index_tickets_on_project_id_and_status_and_position"
     t.index ["project_id", "ticket_number"], name: "index_tickets_on_project_id_and_ticket_number", unique: true
     t.index ["project_id"], name: "index_tickets_on_project_id"
     t.index ["reporter_id"], name: "index_tickets_on_reporter_id"
