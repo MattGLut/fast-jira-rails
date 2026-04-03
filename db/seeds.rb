@@ -1,34 +1,54 @@
 puts "Seeding FastJira demo data..."
 
-TicketLabel.delete_all
-TicketRelationship.delete_all
-Notification.delete_all
-ActivityLog.delete_all
-PrLink.delete_all
-Comment.delete_all
-Ticket.delete_all
-Label.delete_all
-ProjectMembership.delete_all
-ApiToken.delete_all
-Project.delete_all
-User.delete_all
+# Idempotent seeds — safe to run multiple times without destroying existing data.
+# Uses find_or_create_by so re-running only fills in what's missing.
 
-admin = User.create!(email: 'admin@fastjira.local', password: 'password123', first_name: 'Alice', last_name: 'Admin', role: :admin)
-pm = User.create!(email: 'pm@fastjira.local', password: 'password123', first_name: 'Bob', last_name: 'Manager', role: :project_manager)
-dev1 = User.create!(email: 'dev1@fastjira.local', password: 'password123', first_name: 'Charlie', last_name: 'Dev', role: :developer)
-dev2 = User.create!(email: 'dev2@fastjira.local', password: 'password123', first_name: 'Diana', last_name: 'Dev', role: :developer)
+admin = User.find_or_create_by!(email: 'admin@fastjira.local') do |u|
+  u.password = 'password123'
+  u.first_name = 'Alice'
+  u.last_name = 'Admin'
+  u.role = :admin
+end
 
-agent_token = ApiToken.create!(user: dev1, name: 'Claude AI Agent')
+pm = User.find_or_create_by!(email: 'pm@fastjira.local') do |u|
+  u.password = 'password123'
+  u.first_name = 'Bob'
+  u.last_name = 'Manager'
+  u.role = :project_manager
+end
+
+dev1 = User.find_or_create_by!(email: 'dev1@fastjira.local') do |u|
+  u.password = 'password123'
+  u.first_name = 'Charlie'
+  u.last_name = 'Dev'
+  u.role = :developer
+end
+
+dev2 = User.find_or_create_by!(email: 'dev2@fastjira.local') do |u|
+  u.password = 'password123'
+  u.first_name = 'Diana'
+  u.last_name = 'Dev'
+  u.role = :developer
+end
+
+agent_token = ApiToken.find_or_create_by!(user: dev1, name: 'Claude AI Agent')
 puts "AI Agent API Token: #{agent_token.token}"
 
-proj1 = Project.create!(name: 'FastJira', key: 'FJ', description: 'The FastJira project itself')
-proj2 = Project.create!(name: 'Backend API', key: 'API', description: 'Backend microservices')
+proj1 = Project.find_or_create_by!(key: 'FJ') do |p|
+  p.name = 'FastJira'
+  p.description = 'The FastJira project itself'
+end
+
+proj2 = Project.find_or_create_by!(key: 'API') do |p|
+  p.name = 'Backend API'
+  p.description = 'Backend microservices'
+end
 
 [proj1, proj2].each do |project|
-  ProjectMembership.create!(project: project, user: admin, role: :manager)
-  ProjectMembership.create!(project: project, user: pm, role: :manager)
-  ProjectMembership.create!(project: project, user: dev1, role: :member)
-  ProjectMembership.create!(project: project, user: dev2, role: :member)
+  ProjectMembership.find_or_create_by!(project: project, user: admin) { |m| m.role = :manager }
+  ProjectMembership.find_or_create_by!(project: project, user: pm) { |m| m.role = :manager }
+  ProjectMembership.find_or_create_by!(project: project, user: dev1) { |m| m.role = :member }
+  ProjectMembership.find_or_create_by!(project: project, user: dev2) { |m| m.role = :member }
 end
 
 label_palette = {
@@ -42,7 +62,7 @@ label_palette = {
 
 labels_by_project = [proj1, proj2].to_h do |project|
   labels = label_palette.map do |name, color|
-    Label.create!(project: project, name: name, color: color)
+    Label.find_or_create_by!(project: project, name: name) { |l| l.color = color }
   end
   [project.id, labels]
 end
@@ -68,7 +88,18 @@ tickets_data = [
   { project: proj2, title: 'Audit authorization boundaries for API v1', description: 'Review all policy scopes for least privilege.', status: :in_progress, priority: :critical, ticket_type: :task, story_points: 5, due_date: Date.current + 2.days, reporter: admin, assignee: dev1 }
 ]
 
-tickets = tickets_data.map { |attributes| Ticket.create!(attributes) }
+tickets = tickets_data.map do |attributes|
+  Ticket.find_or_create_by!(project: attributes[:project], title: attributes[:title]) do |t|
+    t.description = attributes[:description]
+    t.status = attributes[:status]
+    t.priority = attributes[:priority]
+    t.ticket_type = attributes[:ticket_type]
+    t.story_points = attributes[:story_points]
+    t.due_date = attributes[:due_date]
+    t.reporter = attributes[:reporter]
+    t.assignee = attributes[:assignee]
+  end
+end
 
 tickets.each_with_index do |ticket, index|
   project_labels = labels_by_project.fetch(ticket.project_id)
@@ -90,73 +121,77 @@ comment_templates = [
 ]
 
 [tickets[0], tickets[1], tickets[4], tickets[9], tickets[12], tickets[16]].each_with_index do |ticket, index|
+  next if ticket.comments.count >= 3
+
   3.times do |comment_index|
     author = [admin, pm, dev1, dev2][(index + comment_index) % 4]
-    Comment.create!(
+    Comment.find_or_create_by!(
       ticket: ticket,
       user: author,
-      body: comment_templates[(index + comment_index) % comment_templates.length],
-      agent_authored: comment_index == 1
-    )
+      body: comment_templates[(index + comment_index) % comment_templates.length]
+    ) { |c| c.agent_authored = comment_index == 1 }
   end
 end
 
 code_review_or_done = tickets.select { |ticket| ticket.code_review? || ticket.done? }
 code_review_or_done.first(8).each_with_index do |ticket, index|
-  PrLink.create!(
-    ticket: ticket,
-    user: ticket.assignee || dev1,
-    title: "#{ticket.key} implementation",
-    url: "https://github.com/fastjira/#{ticket.project.key.downcase}/pull/#{100 + index}",
-    status: ticket.done? ? :merged : :open
-  )
+  PrLink.find_or_create_by!(ticket: ticket, url: "https://github.com/fastjira/#{ticket.project.key.downcase}/pull/#{100 + index}") do |pr|
+    pr.user = ticket.assignee || dev1
+    pr.title = "#{ticket.key} implementation"
+    pr.status = ticket.done? ? :merged : :open
+  end
 end
 
-status_audit = [
-  [tickets[0], 'todo', 'in_progress', dev1],
-  [tickets[1], 'in_progress', 'code_review', dev2],
-  [tickets[4], 'qa', 'done', dev1],
-  [tickets[10], 'in_progress', 'qa', dev2],
-  [tickets[13], 'code_review', 'done', dev1],
-  [tickets[17], 'todo', 'in_progress', dev1]
-]
+# Only create activity logs if none exist yet (avoid duplicating history)
+if ActivityLog.count == 0
+  status_audit = [
+    [tickets[0], 'todo', 'in_progress', dev1],
+    [tickets[1], 'in_progress', 'code_review', dev2],
+    [tickets[4], 'qa', 'done', dev1],
+    [tickets[10], 'in_progress', 'qa', dev2],
+    [tickets[13], 'code_review', 'done', dev1],
+    [tickets[17], 'todo', 'in_progress', dev1]
+  ]
 
-status_audit.each do |ticket, old_status, new_status, actor|
-  ActivityLog.create!(
-    ticket: ticket,
-    user: actor,
-    action: 'status_changed',
-    field_changed: 'status',
-    old_value: old_status,
-    new_value: new_status
-  )
+  status_audit.each do |ticket, old_status, new_status, actor|
+    ActivityLog.create!(
+      ticket: ticket,
+      user: actor,
+      action: 'status_changed',
+      field_changed: 'status',
+      old_value: old_status,
+      new_value: new_status
+    )
+  end
 end
 
-NotificationService.ticket_assigned(tickets[0], pm)
-NotificationService.ticket_assigned(tickets[1], admin)
-NotificationService.status_changed(tickets[4], dev1, 'qa', 'done')
-NotificationService.status_changed(tickets[10], dev2, 'in_progress', 'qa')
+# Only create sample notifications if none exist yet
+if Notification.count == 0
+  NotificationService.ticket_assigned(tickets[0], pm)
+  NotificationService.ticket_assigned(tickets[1], admin)
+  NotificationService.status_changed(tickets[4], dev1, 'qa', 'done')
+  NotificationService.status_changed(tickets[10], dev2, 'in_progress', 'qa')
 
-Comment.where(ticket: [tickets[0], tickets[9]]).limit(4).each do |comment|
-  NotificationService.comment_added(comment, comment.user)
+  Comment.where(ticket: [tickets[0], tickets[9]]).limit(4).each do |comment|
+    NotificationService.comment_added(comment, comment.user)
+  end
+
+  Notification.find_or_create_by!(
+    recipient: admin,
+    actor: pm,
+    ticket: tickets[17],
+    notification_type: 'mention'
+  ) { |n| n.message = "Bob mentioned you in #{tickets[17].key}: Authorization audit is blocked" }
+
+  Notification.find_or_create_by!(
+    recipient: dev2,
+    actor: admin,
+    ticket: tickets[12],
+    notification_type: 'reminder'
+  ) do |n|
+    n.message = "Alice requested an update on #{tickets[12].key}"
+    n.read = true
+  end
 end
-
-Notification.create!(
-  recipient: admin,
-  actor: pm,
-  ticket: tickets[17],
-  notification_type: 'mention',
-  message: "Bob mentioned you in #{tickets[17].key}: Authorization audit is blocked",
-  read: false
-)
-
-Notification.create!(
-  recipient: dev2,
-  actor: admin,
-  ticket: tickets[12],
-  notification_type: 'reminder',
-  message: "Alice requested an update on #{tickets[12].key}",
-  read: true
-)
 
 puts "Seed complete: #{User.count} users, #{Project.count} projects, #{Ticket.count} tickets, #{Notification.count} notifications"
