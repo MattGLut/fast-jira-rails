@@ -1,0 +1,120 @@
+<% status_class = if @agent.last_used_at.present? && @agent.last_used_at >= 1.hour.ago
+                    "bg-green-400"
+                  elsif @agent.last_used_at.present? && @agent.last_used_at >= 24.hours.ago
+                    "bg-yellow-400"
+                  else
+                    "bg-gray-500"
+                  end %>
+
+<div class="space-y-6">
+  <header class="rounded-2xl border border-gray-800 bg-gray-800/60 p-5">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-cyan-300">Agent detail</p>
+        <h1 class="mt-1 text-3xl font-bold text-white" style="font-family: 'Playfair Display', serif;"><%= @agent.name %></h1>
+        <p class="mt-2 text-sm text-gray-300"><%= @user.email %> · Token: <span class="text-gray-200"><%= @agent.name %></span></p>
+      </div>
+      <div class="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900/60 px-3 py-1.5 text-xs text-gray-200">
+        <span class="h-2.5 w-2.5 rounded-full <%= status_class %>"></span>
+        <span>
+          <%= @agent.last_used_at.present? ? "Last used #{time_ago_in_words(@agent.last_used_at)} ago" : "Never used" %>
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+        <p class="text-xs uppercase tracking-wide text-gray-400">Total assigned</p>
+        <p class="mt-1 text-2xl font-bold text-gray-100"><%= @total_assigned_count %></p>
+      </div>
+      <div class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+        <p class="text-xs uppercase tracking-wide text-gray-400">Completed</p>
+        <p class="mt-1 text-2xl font-bold text-gray-100"><%= @completed_count %></p>
+      </div>
+      <div class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+        <p class="text-xs uppercase tracking-wide text-gray-400">PR links</p>
+        <p class="mt-1 text-2xl font-bold text-gray-100"><%= @pr_count %></p>
+      </div>
+      <div class="rounded-xl border border-gray-700 bg-gray-900/60 p-3">
+        <p class="text-xs uppercase tracking-wide text-gray-400">Comments</p>
+        <p class="mt-1 text-2xl font-bold text-gray-100"><%= @comment_count %></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="grid gap-6 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Activity Timeline</h2>
+          <%= link_to "Back to agents", agents_path, class: "text-xs text-cyan-300 hover:text-cyan-200" %>
+        </div>
+
+        <% if @timeline_items.any? %>
+          <div class="space-y-2">
+            <% @timeline_items.each_with_index do |item, index| %>
+              <% row_background = index.even? ? "bg-gray-900/50" : "bg-gray-900/70" %>
+              <article class="relative rounded-xl border border-gray-700 <%= row_background %> p-3 pl-6">
+                <span class="absolute inset-y-2 left-2 w-px bg-gray-700"></span>
+                <span class="absolute left-[5px] top-4 inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400"></span>
+                <div class="flex items-start justify-between gap-3">
+                  <p class="text-sm text-gray-200"><span class="mr-2"><%= item[:icon] %></span><%= item[:description] %></p>
+                  <span class="shrink-0 text-xs text-gray-500"><%= time_ago_in_words(item[:created_at]) %> ago</span>
+                </div>
+                <div class="mt-1 text-xs">
+                  <%= link_to item[:ticket].key, ticket_path(item[:ticket]), class: "text-cyan-300 hover:text-cyan-200" %>
+                </div>
+              </article>
+            <% end %>
+          </div>
+
+          <% if @has_more_timeline %>
+            <div class="mt-4">
+              <%= link_to "Load more", agent_path(@agent, page: @timeline_page + 1), class: "inline-flex rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-200 hover:bg-gray-700/60" %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-gray-400">No activity has been captured for this agent yet.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <aside class="space-y-4">
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-4">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Current work</h3>
+        <% if @assigned_tickets.any? %>
+          <div class="space-y-2">
+            <% @assigned_tickets.each do |ticket| %>
+              <div class="rounded-lg border border-gray-700 bg-gray-900/60 p-3 text-sm">
+                <%= link_to "#{ticket.key} · #{ticket.title}", ticket_path(ticket), class: "font-medium text-cyan-300 hover:text-cyan-200" %>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="rounded-full px-2 py-1 text-xs <%= status_badge_class(ticket.status) %>"><%= ticket.status.humanize %></span>
+                  <span class="rounded-full px-2 py-1 text-xs <%= priority_badge_class(ticket.priority) %>"><%= ticket.priority.humanize %></span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-400">No open assignments.</p>
+        <% end %>
+      </div>
+
+      <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-4">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Recent PRs</h3>
+        <% if @recent_pr_links.any? %>
+          <div class="space-y-2">
+            <% @recent_pr_links.each do |pr_link| %>
+              <div class="rounded-lg border border-gray-700 bg-gray-900/60 p-3 text-sm">
+                <%= link_to pr_link.title, pr_link.url, target: "_blank", rel: "noopener", class: "font-medium text-cyan-300 hover:text-cyan-200" %>
+                <p class="mt-1 text-xs text-gray-500"><%= pr_link.ticket.key %> · <%= time_ago_in_words(pr_link.created_at) %> ago</p>
+                <span class="mt-2 inline-flex rounded-full border border-gray-600 px-2 py-0.5 text-xs text-gray-300"><%= pr_link.status.humanize %></span>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-400">No PR links submitted yet.</p>
+        <% end %>
+      </div>
+    </aside>
+  </section>
+</div>
