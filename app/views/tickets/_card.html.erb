@@ -1,34 +1,36 @@
-<article id="<%= dom_id(ticket) %>"
+<article id="ticket_card_<%= ticket.id %>"
          class="rounded-xl border border-gray-700 bg-gray-900/80 p-3 shadow-lg shadow-black/20"
          data-ticket-id="<%= ticket.id %>">
-  <div class="mb-2 flex items-start justify-between gap-2">
-    <p class="text-xs uppercase tracking-wider text-gray-400"><%= ticket.key %></p>
-    <span class="text-sm" title="<%= ticket.ticket_type.humanize %>"><%= type_icon(ticket.ticket_type) %></span>
-  </div>
+  <div id="<%= dom_id(ticket) %>">
+    <div class="mb-2 flex items-start justify-between gap-2">
+      <p class="text-xs uppercase tracking-wider text-gray-400"><%= ticket.key %></p>
+      <span class="text-sm" title="<%= ticket.ticket_type.humanize %>"><%= type_icon(ticket.ticket_type) %></span>
+    </div>
 
-  <h4 class="mb-3 text-sm font-semibold text-gray-100">
-    <%= link_to ticket.title, ticket_path(ticket), class: "hover:text-cyan-300" %>
-  </h4>
+    <h4 class="mb-3 text-sm font-semibold text-gray-100">
+      <%= link_to ticket.title, ticket_path(ticket), class: "hover:text-cyan-300" %>
+    </h4>
 
-  <div class="mb-3 flex flex-wrap gap-1.5">
-    <span class="rounded-full px-2 py-1 text-[11px] <%= priority_badge_class(ticket.priority) %>"><%= ticket.priority.humanize %></span>
-    <% if ticket.story_points.present? %>
-      <span class="rounded-full border border-gray-600 bg-gray-800 px-2 py-1 text-[11px] text-gray-300"><%= ticket.story_points %> pts</span>
-    <% end %>
-  </div>
-
-  <div class="flex items-center justify-between text-xs text-gray-400">
-    <span>
-      <% if ticket.assignee.present? %>
-        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-700 text-[10px] font-semibold text-gray-100">
-          <%= ticket.assignee.email.first(2).upcase %>
-        </span>
-      <% else %>
-        Unassigned
+    <div class="mb-3 flex flex-wrap gap-1.5">
+      <span class="rounded-full px-2 py-1 text-[11px] <%= priority_badge_class(ticket.priority) %>"><%= ticket.priority.humanize %></span>
+      <% if ticket.story_points.present? %>
+        <span class="rounded-full border border-gray-600 bg-gray-800 px-2 py-1 text-[11px] text-gray-300"><%= ticket.story_points %> pts</span>
       <% end %>
-    </span>
-    <% if ticket.due_date.present? %>
-      <span><%= ticket.due_date.strftime("%b %d") %></span>
-    <% end %>
+    </div>
+
+    <div class="flex items-center justify-between text-xs text-gray-400">
+      <span>
+        <% if ticket.assignee.present? %>
+          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-700 text-[10px] font-semibold text-gray-100">
+            <%= ticket.assignee.email.first(2).upcase %>
+          </span>
+        <% else %>
+          Unassigned
+        <% end %>
+      </span>
+      <% if ticket.due_date.present? %>
+        <span><%= ticket.due_date.strftime("%b %d") %></span>
+      <% end %>
+    </div>
   </div>
 </article>

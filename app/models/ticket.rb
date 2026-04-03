@@ -41,6 +41,7 @@ class Ticket < ApplicationRecord
   validates :story_points, inclusion: { in: STORY_POINTS }, allow_nil: true
 
   before_create :assign_ticket_number
+  after_update_commit :broadcast_ticket_update
 
   def key
     "#{project.key}-#{ticket_number}"
@@ -53,5 +54,20 @@ class Ticket < ApplicationRecord
       project.increment!(:ticket_sequence)
       self.ticket_number = project.ticket_sequence
     end
+  end
+
+  def broadcast_ticket_update
+    if saved_change_to_status?
+      broadcast_remove_to "project_#{project_id}_board", target: "ticket_card_#{id}"
+      broadcast_append_to "project_#{project_id}_board",
+                          target: "kanban_column_#{status}_cards",
+                          partial: "tickets/card",
+                          locals: { ticket: self }
+    end
+
+    broadcast_replace_to "ticket_#{id}",
+                         target: "ticket_#{id}_details",
+                         partial: "tickets/detail_sidebar",
+                         locals: { ticket: self }
   end
 end

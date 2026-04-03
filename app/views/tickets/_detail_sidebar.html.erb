@@ -1,0 +1,25 @@
+<div id="ticket_<%= ticket.id %>_details" class="space-y-6">
+  <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Details</h3>
+    <dl class="space-y-2 text-sm">
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Status</dt><dd><span class="rounded-full px-2 py-1 text-xs <%= status_badge_class(ticket.status) %>"><%= ticket.status.humanize %></span></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Priority</dt><dd><span class="rounded-full px-2 py-1 text-xs <%= priority_badge_class(ticket.priority) %>"><%= ticket.priority.humanize %></span></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Type</dt><dd class="text-gray-200"><%= type_icon(ticket.ticket_type) %> <%= ticket.ticket_type.humanize %></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Assignee</dt><dd class="text-gray-200"><%= ticket.assignee&.email || "Unassigned" %></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Reporter</dt><dd class="text-gray-200"><%= ticket.reporter.email %></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Story Points</dt><dd class="text-gray-200"><%= ticket.story_points || "—" %></dd></div>
+      <div class="flex items-center justify-between gap-2"><dt class="text-gray-400">Due Date</dt><dd class="text-gray-200"><%= ticket.due_date || "—" %></dd></div>
+    </dl>
+  </div>
+
+  <div class="rounded-2xl border border-gray-800 bg-gray-800/50 p-5">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-300">Labels</h3>
+    <div class="flex flex-wrap gap-2">
+      <% ticket.labels.each do |label| %>
+        <span class="rounded-full border border-gray-700 px-2 py-1 text-xs text-gray-200" style="background-color: color-mix(in srgb, <%= label.color %> 25%, #111827);">
+          <%= label.name %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+</div>

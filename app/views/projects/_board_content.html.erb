@@ -1,3 +1,5 @@
+<%= turbo_stream_from "project_#{@project.id}_board" %>
+
 <div class="space-y-5" data-controller="kanban filter" data-kanban-project-id-value="<%= @project.id %>">
   <%= form_with url: board_project_path(@project), method: :get, class: "grid gap-3 rounded-2xl border border-gray-800 bg-gray-800/60 p-4 md:grid-cols-2 xl:grid-cols-5", data: { filter_target: "form", turbo_frame: "kanban_board" } do |f| %>
     <div class="xl:col-span-2">
