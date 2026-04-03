@@ -26,6 +26,8 @@ Rails.application.routes.draw do
   end
 
   get "my_tickets", to: "tickets#my_tickets"
+  get "agents", to: "agent_dashboard#index"
+  get "agents/:id", to: "agent_dashboard#show", as: :agent
 
   resources :notifications, only: [:index] do
     member do

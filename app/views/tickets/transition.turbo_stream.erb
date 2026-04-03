@@ -1,3 +1,3 @@
-<%= turbo_stream.replace dom_id(@ticket) do %>
+<%= turbo_stream.replace "ticket_card_#{@ticket.id}" do %>
   <%= render "tickets/card", ticket: @ticket %>
 <% end %>

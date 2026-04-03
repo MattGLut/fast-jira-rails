@@ -5,7 +5,8 @@
     <span class="rounded-full bg-gray-900 px-2 py-1 text-xs text-gray-300" id="<%= "#{status}_count" %>"><%= tickets.count %></span>
   </div>
 
-  <div class="flex min-h-[120px] flex-1 flex-col gap-3"
+  <div id="kanban_column_<%= status %>_cards"
+       class="flex min-h-[120px] flex-1 flex-col gap-3"
        data-kanban-target="column"
        data-status="<%= status %>">
     <% tickets.each do |ticket| %>
