@@ -3,6 +3,8 @@ require 'rails_helper'
 RSpec.describe 'API V1 Token Authentication', type: :request do
   before do
     stub_const('Api::V1::AuthenticationTestController', Class.new(Api::V1::BaseController) do
+      skip_after_action :verify_authorized, only: :index
+
       def index
         render json: { user_id: current_user.id }
       end

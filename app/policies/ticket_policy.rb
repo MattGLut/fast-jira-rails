@@ -24,7 +24,7 @@ class TicketPolicy < ApplicationPolicy
   end
 
   def assign?
-    admin? || manager_of_project?(record.project)
+    admin? || member_of_project?(record.project)
   end
 
   def transition?

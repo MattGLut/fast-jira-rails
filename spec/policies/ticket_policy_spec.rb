@@ -45,7 +45,7 @@ RSpec.describe TicketPolicy do
     end
   end
 
-  permissions :destroy?, :assign? do
+  permissions :destroy? do
     it 'allows admin and project manager' do
       expect(described_class).to permit(admin, ticket)
       expect(described_class).to permit(project_manager, ticket)
@@ -53,6 +53,18 @@ RSpec.describe TicketPolicy do
 
     it 'denies developers and outsiders' do
       expect(described_class).not_to permit(developer, ticket)
+      expect(described_class).not_to permit(outsider, ticket)
+    end
+  end
+
+  permissions :assign? do
+    it 'allows admin, project manager, and project members' do
+      expect(described_class).to permit(admin, ticket)
+      expect(described_class).to permit(project_manager, ticket)
+      expect(described_class).to permit(developer, ticket)
+    end
+
+    it 'denies outsiders' do
       expect(described_class).not_to permit(outsider, ticket)
     end
   end

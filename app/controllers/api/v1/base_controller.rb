@@ -5,6 +5,7 @@ module Api
       include TokenAuthentication
 
       before_action :authenticate_with_token!
+      after_action :verify_authorized, unless: :pundit_policy_scoped?
 
       rescue_from Pundit::NotAuthorizedError, with: :render_forbidden
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found

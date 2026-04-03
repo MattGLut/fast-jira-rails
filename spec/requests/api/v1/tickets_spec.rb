@@ -127,8 +127,12 @@ RSpec.describe 'API V1 Tickets', type: :request do
       )
     end
 
-    it 'returns forbidden when policy denies access' do
-      patch "/api/v1/tickets/#{ticket.id}/assign", headers: headers
+    it 'returns forbidden when user is not a project member' do
+      outsider = create(:user)
+      outsider_token = create(:api_token, user: outsider)
+
+      patch "/api/v1/tickets/#{ticket.id}/assign",
+            headers: { 'Authorization' => "Bearer #{outsider_token.token}" }
 
       expect(response).to have_http_status(:forbidden)
       expect(json_response).to eq('error' => 'Forbidden')
