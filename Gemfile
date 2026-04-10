@@ -72,7 +72,7 @@ group :test do
   gem "pundit-matchers", "~> 3.1"
   gem "database_cleaner-active_record", "~> 2.1"
   gem "capybara", "~> 3.40"
-  gem "selenium-webdriver", "~> 4.25"
+  gem "selenium-webdriver", "~> 4.43"
 end
 
 group :development do
